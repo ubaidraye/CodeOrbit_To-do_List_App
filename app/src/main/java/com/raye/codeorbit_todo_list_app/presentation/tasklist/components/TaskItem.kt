@@ -27,6 +27,7 @@ import com.raye.codeorbit_todo_list_app.domain.model.TodoTask
 
 @Composable
 fun TaskItem(
+    modifier: Modifier = Modifier,
     task: TodoTask,
     onTaskClick: () -> Unit = {},
     onTaskToggle: (Int, Boolean) -> Unit,
@@ -37,7 +38,7 @@ fun TaskItem(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 2.dp)
             .clickable(onClick = onTaskClick)

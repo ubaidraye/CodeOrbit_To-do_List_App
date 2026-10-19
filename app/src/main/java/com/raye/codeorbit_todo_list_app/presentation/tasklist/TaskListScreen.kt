@@ -206,9 +206,11 @@ fun TaskListScreen(
                             ) {
                                 items(
                                     items = sortedTasks,
-                                    key = { it.id }
+                                    key = { it.id },
+                                    contentType = { "task_item" }
                                 ) { task ->
                                     TaskItem(
+                                        modifier = Modifier.animateItem(),
                                         task = task,
                                         onTaskClick = {
                                             taskToEdit = task

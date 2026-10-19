@@ -9,8 +9,12 @@ import com.raye.codeorbit_todo_list_app.domain.repository.TodoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -18,34 +22,25 @@ class TaskListViewModel @Inject constructor(
     private val repository: TodoRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<TaskListUiState>(TaskListUiState.Loading)
-    val uiState = _uiState.asStateFlow()
-
     private val _sortOrder = MutableStateFlow(TaskSortOrder.NEWEST_FIRST)
     val sortOrder = _sortOrder.asStateFlow()
 
+    val uiState: StateFlow<TaskListUiState> = combine(
+        repository.getAllTasks(),
+        _sortOrder
+    ) { tasks, sortOrder ->
+        val sortedTasks = sortTasks(tasks, sortOrder)
+        TaskListUiState.Success(sortedTasks) as TaskListUiState
+    }.catch { throwable ->
+        emit(TaskListUiState.Error(throwable.localizedMessage ?: "Failed to load tasks"))
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = TaskListUiState.Loading
+    )
+
     fun changeSortOrder(sortOrder: TaskSortOrder) {
         _sortOrder.value = sortOrder
-    }
-
-    fun loadTasks() {
-        _uiState.value = TaskListUiState.Loading
-
-        viewModelScope.launch {
-
-            repository.getAllTasks()
-                .catch {
-                    _uiState.value =
-                        TaskListUiState.Error(it.localizedMessage ?: "Failed to load tasks.")
-                }
-                .collect { tasks ->
-                    _uiState.value = TaskListUiState.Success(tasks = tasks)
-                }
-        }
-    }
-
-    init {
-        loadTasks()
     }
 
     fun sortTasks(
