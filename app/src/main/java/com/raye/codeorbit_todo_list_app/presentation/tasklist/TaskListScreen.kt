@@ -126,7 +126,7 @@ fun TaskListScreen(
 
                         } else {
                             TaskListContent(
-                                tasks = viewModel.sortTasks(state.tasks, sortOrder),
+                                tasks = state.tasks,
                                 sortOrder = sortOrder,
                                 onSortOrderChange = viewModel::changeSortOrder,
                                 onTaskClick = { task ->
